@@ -2,11 +2,12 @@
 
 ## Wstęp
 
-Niniejszy dokument przedstawia złożony proces instalacji oraz konfiguracji serwera OpenVPN, wraz ze wzmocnieniem bezpieczeństwa serwera Debian przy użyciu trzech skryptów: `security.sh`, `security-addons.sh` oraz `openvpn.sh`.
+Niniejszy dokument przedstawia złożony proces instalacji oraz konfiguracji serwera OpenVPN, wraz ze wzmocnieniem bezpieczeństwa serwera Debian przy użyciu czterech skryptów: `security.sh`, `security-addons.sh`, `openvpn.sh` oraz `disable_unused_services.sh`.
 
 - **Skrypt `security.sh`** koncentruje się na implementacji podstawowych aspektów bezpieczeństwa systemowego, takich jak zmiana portu SSH, wyłączenie logowania root, konfiguracja zapory ogniowej oraz instalacja podstawowych narzędzi bezpieczeństwa.
 - **Skrypt `security-addons.sh`** wprowadza dodatkowe warstwy zabezpieczeń, zwiększając odporność serwera na różnorodne zagrożenia, w tym skanowanie portów oraz ataki typu brute force.
 - **Skrypt `openvpn.sh`** odpowiada za kompleksową instalację i konfigurację serwera OpenVPN, umożliwiając bezpieczne połączenia VPN dla użytkowników.
+- **Skrypt `disable_unused_services.sh`** służy do sprawdzania i wyłączania nieużywanych usług na serwerze VPS, co pomaga zoptymalizować jego wydajność oraz zredukować powierzchnię ataku.
 
 ## Wymagania
 
@@ -86,13 +87,31 @@ sudo ./openvpn.sh add-client <nazwa_klienta>
 
 Polecenie to generuje nowe certyfikaty klienta, które mogą być następnie wykorzystane do konfiguracji połączenia VPN.
 
+### Skrypt `disable_unused_services.sh`
+
+Skrypt `disable_unused_services.sh` służy do sprawdzania, wyłączania i usuwania nieużywanych usług na serwerze VPS. Dzięki temu można zoptymalizować wydajność serwera oraz zmniejszyć jego powierzchnię ataku, ograniczając liczbę uruchomionych procesów do absolutnego minimum wymaganego dla serwera VPN.
+
+**Użycie:**
+
+```bash
+sudo ./disable_unused_services.sh
+```
+
+Skrypt `disable_unused_services.sh` sprawdza status nieużywanych usług, takich jak:
+
+- Serwery WWW: `apache2`, `nginx`, `lighttpd`
+- Usługi sieciowe: `xinetd`, `exim4`, `postfix`
+- Usługi multimedialne i inne: `bluetooth`, `avahi-daemon`, `cups`, `lightdm`, `gdm3`
+- Menedżery sieci: `NetworkManager`, `systemd-resolved`
+
+Jeśli te usługi są uruchomione, skrypt je wyłącza i usuwa, co pomaga w poprawie bezpieczeństwa i wydajności serwera.
+
 ## Konfiguracja Klienta OpenVPN
 
 Po dodaniu nowego klienta certyfikaty (`client1.crt`, `client1.key`, `ca.crt`) muszą zostać skopiowane na urządzenie klienckie. Następnie należy utworzyć plik konfiguracyjny (`client.ovpn`), zawierający wszystkie niezbędne informacje do połączenia z serwerem.
 
 ## Podsumowanie
 
-Przewodnik ten prezentuje procedurę konfiguracji serwera Debian z uwzględnieniem kluczowych aspektów bezpieczeństwa oraz uruchomieniem serwera OpenVPN. Skrypty `security.sh`, `security-addons.sh` i `openvpn.sh` automatyzują większość zadań, co znacząco ułatwia cały proces i zwiększa jego niezawodność.
+Przewodnik ten prezentuje procedurę konfiguracji serwera Debian z uwzględnieniem kluczowych aspektów bezpieczeństwa oraz uruchomieniem serwera OpenVPN. Skrypty `security.sh`, `security-addons.sh`, `openvpn.sh` i `disable_unused_services.sh` automatyzują większość zadań, co znacząco ułatwia cały proces i zwiększa jego niezawodność.
 
 W przypadku potrzeby uzyskania dalszych informacji, zaleca się skorzystanie z dokumentacji Debiana oraz OpenVPN lub kontakt z administratorem sieci.
-
