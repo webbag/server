@@ -1,5 +1,7 @@
 #!/bin/bash
 
+## Debian Security Configuration
+
 # Zmienna z nazwą użytkownika do utworzenia
 NEW_USER="kris"
 SSH_PORT=2222
@@ -89,64 +91,5 @@ check_success
 sudo systemctl restart ssh
 check_success
 
-# 12. Instalacja i konfiguracja OpenVPN
-sudo apt install openvpn easy-rsa -y
-check_success
-
-# Tworzenie katalogu dla Easy-RSA
-easy_rsa_dir="/etc/openvpn/easy-rsa"
-sudo make-cadir $easy_rsa_dir
-check_success
-
-# Konfiguracja Easy-RSA i generowanie certyfikatów
-cd $easy_rsa_dir
-source vars
-./clean-all
-./build-ca --batch
-./build-key-server --batch server
-./build-dh
-check_success
-
-# Kopiowanie certyfikatów do katalogu OpenVPN
-sudo cp $easy_rsa_dir/keys/{server.crt,server.key,ca.crt,dh2048.pem} /etc/openvpn/
-
-# Generowanie certyfikatu i klucza dla klienta
-./build-key --batch klient
-check_success
-
-# Kopiowanie certyfikatów klienta do katalogu dostępnego dla pobrania
-sudo mkdir -p /etc/openvpn/clients
-sudo cp $easy_rsa_dir/keys/{klient.crt,klient.key,ca.crt} /etc/openvpn/clients/
-check_success
-
-# Tworzenie pliku konfiguracyjnego OpenVPN
-sudo bash -c 'cat > /etc/openvpn/server.conf <<EOF
-port 1194
-dev tun
-proto udp
-ca ca.crt
-cert server.crt
-key server.key
-dh dh2048.pem
-server 10.8.0.0 255.255.255.0
-ifconfig-pool-persist ipp.txt
-push "redirect-gateway def1 bypass-dhcp"
-push "dhcp-option DNS 8.8.8.8"
-push "dhcp-option DNS 8.8.4.4"
-keepalive 10 120
-comp-lzo
-persist-key
-persist-tun
-status openvpn-status.log
-log-append /var/log/openvpn.log
-verb 3
-EOF'
-
-# Włączenie i uruchomienie OpenVPN
-sudo systemctl enable openvpn@server
-sudo systemctl start openvpn@server
-check_success
-
-# Podsumowanie
+# Podsumowanie konfiguracji bezpieczeństwa
 echo "Konfiguracja bezpieczeństwa zakończona. Zaloguj się za pomocą nowego użytkownika: $NEW_USER na porcie SSH: $SSH_PORT"
-echo "OpenVPN został zainstalowany i uruchomiony. Certyfikaty klienta dostępne w /etc/openvpn/clients. Skonfiguruj klienta VPN, aby połączyć się z serwerem."
