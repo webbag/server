@@ -2,10 +2,6 @@
 
 ## Debian Security Configuration
 
-# Zmienna z nazwą użytkownika do utworzenia
-NEW_USER="kris"
-SSH_PORT=2222
-
 # Funkcja do sprawdzania czy komenda została wykonana poprawnie
 function check_success {
     if [ $? -ne 0 ]; then
@@ -14,36 +10,57 @@ function check_success {
     fi
 }
 
+# Sprawdzenie, czy podano odpowiednią liczbę argumentów lub --help
+if [[ "$1" == "--help" ]]; then
+    echo "Użycie:"
+    echo "$0 <nazwa_użytkownika> <port_ssh>"
+    echo "Przykład: $0 webbag 2222"
+    exit 0
+elif [ $# -ne 2 ]; then
+    echo "Błędne użycie. Musisz podać nazwę użytkownika oraz port SSH. Użyj --help, aby uzyskać informacje na temat poprawnego użycia."
+    exit 1
+fi
+
+# Zmienne z nazwą użytkownika do utworzenia i portem SSH
+NEW_USER="$1"
+SSH_PORT="$2"
+
 # 1. Aktualizacja systemu
 sudo apt update && sudo apt upgrade -y
 check_success
 
 # 2. Tworzenie nowego użytkownika
-sudo adduser --disabled-password --gecos "" $NEW_USER
-check_success
-
-# Dodanie użytkownika do grupy sudo
-sudo usermod -aG sudo $NEW_USER
-check_success
+if id "$NEW_USER" &>/dev/null; then
+    echo "Użytkownik $NEW_USER już istnieje."
+else
+    sudo adduser --disabled-password --gecos "" $NEW_USER
+    check_success
+    # Dodanie użytkownika do grupy sudo
+    sudo usermod -aG sudo $NEW_USER
+    check_success
+fi
 
 # 3. Konfiguracja uwierzytelniania kluczem SSH
 sudo mkdir -p /home/$NEW_USER/.ssh
 if [ -f ~/.ssh/authorized_keys ]; then
     sudo cp ~/.ssh/authorized_keys /home/$NEW_USER/.ssh/
+    sudo chown $NEW_USER:$NEW_USER /home/$NEW_USER/.ssh/authorized_keys
+    sudo chmod 600 /home/$NEW_USER/.ssh/authorized_keys
 else
     echo "Brak pliku authorized_keys w katalogu domowym. Uwierzytelnianie kluczem SSH nie zostało skonfigurowane."
 fi
 sudo chown -R $NEW_USER:$NEW_USER /home/$NEW_USER/.ssh
 sudo chmod 700 /home/$NEW_USER/.ssh
-sudo chmod 600 /home/$NEW_USER/.ssh/authorized_keys
 
 # 4. Wyłączenie logowania root przez SSH
 sudo sed -i 's/^#PermitRootLogin.*/PermitRootLogin no/' /etc/ssh/sshd_config
 check_success
 
 # 5. Zmiana domyślnego portu SSH
-sudo sed -i "s/^#Port 22/Port $SSH_PORT/" /etc/ssh/sshd_config
-check_success
+if ! grep -q "^Port $SSH_PORT" /etc/ssh/sshd_config; then
+    sudo sed -i "s/^#Port 22/Port $SSH_PORT/" /etc/ssh/sshd_config
+    check_success
+fi
 
 # Dodanie nowego portu do zapory UFW
 sudo ufw allow $SSH_PORT/tcp
