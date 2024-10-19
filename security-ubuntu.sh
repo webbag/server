@@ -55,7 +55,7 @@ if dpkg --compare-versions "$UBUNTU_VERSION" "ge" "23.04"; then
   fi
   sudo systemctl daemon-reload
   check_success
-  sudo systemctl restart sshd
+  sudo systemctl restart ssh.socket
   check_success
 else
   # Zmiana domyślnego portu SSH
@@ -72,7 +72,7 @@ else
     check_success
   fi
   echo "Restart usługi SSH..."
-  sudo systemctl restart sshd
+  sudo systemctl restart ssh.socket
   check_success
 fi
 
