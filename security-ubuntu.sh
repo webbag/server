@@ -1,4 +1,7 @@
 #!/bin/bash
+
+# Przetestowane - OK 2024-10-19
+
 # Skrypt konfiguracyjny dla Ubuntu 24 - aktualizacja, zmiana portu SSH, instalacja Fail2ban i podstawowa konfiguracja
 
 # Funkcja do sprawdzania czy komenda została wykonana poprawnie
@@ -11,9 +14,9 @@ function check_success {
 
 # Sprawdzenie, czy podano odpowiednią liczbę argumentów lub --help
 if [[ "$1" == "--help" ]]; then
-    echo "Użycie:"
-    echo "$0 <nazwa_użytkownika> <port_ssh>"
-    echo "Przykład: $0 webbag 2222"
+    echo "Użycie, wprowadz numer portu z zakresu 49152-65535 "
+    echo "$0 <nazwa_użytkownika> <port_ssh> "
+    echo "Przykład: $0 webbag 49152"
     exit 0
 elif [[ $# -lt 2 ]]; then
     echo "Błędne użycie. Parametry <nazwa_użytkownika> i <port_ssh> są wymagane. Użyj --help, aby uzyskać informacje na temat poprawnego użycia."
