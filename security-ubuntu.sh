@@ -80,8 +80,9 @@ fi
 if id "$NEW_USER" &>/dev/null; then
     echo "Użytkownik $NEW_USER już istnieje."
 else
-    echo "Tworzenie nowego użytkownika: $NEW_USER..."
+    echo "Tworzenie nowego użytkownika: $NEW_USER ... bez hasła"
     sudo adduser --disabled-password --gecos "" $NEW_USER
+    sudo passwd -d $NEW_USER
     check_success
     # Dodanie użytkownika do grupy sudo
     sudo usermod -aG sudo $NEW_USER
