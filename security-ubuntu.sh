@@ -15,11 +15,14 @@ if [[ "$1" == "--help" ]]; then
     echo "$0 <nazwa_użytkownika> <port_ssh>"
     echo "Przykład: $0 webbag 2222"
     exit 0
-else then
+elif [[ $# -lt 2 ]]; then
     echo "Błędne użycie. Parametry <nazwa_użytkownika> i <port_ssh> są wymagane. Użyj --help, aby uzyskać informacje na temat poprawnego użycia."
     exit 1
 fi
 
+# Zmienne z nazwą użytkownika do utworzenia i portem SSH
+NEW_USER="$1"
+NEW_SSH_PORT="$2"
 # Zmienne z nazwą użytkownika do utworzenia i portem SSH
 NEW_USER="$1"
 NEW_SSH_PORT="$2"
@@ -40,7 +43,7 @@ fi
 
 # Edycja pliku konfiguracyjnego ssh.socket dla systemu Ubuntu 23.04 i nowszych wersji (Socket)
 UBUNTU_VERSION=$(lsb_release -rs)
-if (( $(echo "$UBUNTU_VERSION >= 23.04" | bc -l) )); then
+if dpkg --compare-versions "$UBUNTU_VERSION" "ge" "23.04"; then
   echo "Wykryto wersję Ubuntu >= 23.04, aktualizacja pliku ssh.socket..."
   if sudo grep -q "^ListenStream=22" /lib/systemd/system/ssh.socket; then
     sudo sed -i "s/^ListenStream=22/ListenStream=$NEW_SSH_PORT/" /lib/systemd/system/ssh.socket
@@ -87,8 +90,8 @@ else
     # Konfiguracja uwierzytelniania kluczem SSH
     sudo mkdir -p /home/$NEW_USER/.ssh
     check_success
-    if [ -f ~/.ssh/authorized_keys ]; then
-        sudo cp ~/.ssh/authorized_keys /home/$NEW_USER/.ssh/
+    if [ -f /home/$SUDO_USER/.ssh/authorized_keys ]; then
+        sudo cp /home/$SUDO_USER/.ssh/authorized_keys /home/$NEW_USER/.ssh/
         check_success
         sudo chown $NEW_USER:$NEW_USER /home/$NEW_USER/.ssh/authorized_keys
         check_success
@@ -120,10 +123,11 @@ sudo sed -i "s/^enabled = false/enabled = true/" /etc/fail2ban/jail.local
 sudo sed -i "s/^bantime  = 10m/bantime  = 30m/" /etc/fail2ban/jail.local
 sudo sed -i "s/^maxretry = 5/maxretry = 3/" /etc/fail2ban/jail.local
 
+
 # Restartowanie usługi Fail2ban
 echo "Restart usługi Fail2ban..."
 sudo systemctl restart fail2ban
 check_success
 
 # Komunikat końcowy
-echo "Skrypt zakończony. Pamiętaj, aby logować się na serwer z użyciem nowego portu SSH: ssh @TwojeIP -p $NEW_SSH_PORT"
+echo "Skrypt zakończony. Pamiętaj, aby logować się na serwer z użyciem nowego portu SSH: ssh $NEW_USER@TwojeIP -p $NEW_SSH_PORT"
